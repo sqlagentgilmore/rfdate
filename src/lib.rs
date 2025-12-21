@@ -8,6 +8,25 @@ pub struct Date {
     day: Option<u16>,
 }
 
+impl PartialOrd for Date {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        for (a, b) in [self.year, self.month, self.day].iter().zip([other.year, other.month, other.day].iter()) {
+            if a.is_none() && b.is_some() {
+                return Some(std::cmp::Ordering::Less);
+            } else if a.is_some() && b.is_none() {
+                return Some(std::cmp::Ordering::Greater);
+            } else if let (Some(a), Some(b)) = (a, b) {
+                match a.cmp(&b) {
+                    std::cmp::Ordering::Less => return Some(std::cmp::Ordering::Less),
+                    std::cmp::Ordering::Greater => return Some(std::cmp::Ordering::Greater),
+                    std::cmp::Ordering::Equal => continue,
+                }
+            }
+        }
+        Some(std::cmp::Ordering::Equal)
+    }
+}
+
 fn is_separator(ch: &char) -> bool {
     matches!(ch, '-' | '/' | '_' | ' ' | '.')
 }
@@ -315,5 +334,32 @@ mod tests {
             date,
             Err(DateError::UndecidedDate((Some(12), Some(10), Some(5))))
         );
+    }
+
+    #[test]
+    fn cmp_dates() {
+        let date1 = Date {
+            year: Some(2023),
+            month: Some(10),
+            day: Some(5),
+        };
+        let date2 = Date {
+            year: Some(2022),
+            month: Some(12),
+            day: Some(31),
+        };
+        assert!(date1 > date2);
+        let date3 = Date {
+            year: Some(2023),
+            month: None,
+            day: None,
+        };
+        assert!(date3 < date1);
+        let date4 = Date {
+            year: Some(2023),
+            month: Some(10),
+            day: None,
+        };
+        assert!(date3 < date4);
     }
 }
