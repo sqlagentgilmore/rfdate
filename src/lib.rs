@@ -1,16 +1,141 @@
 use std::fmt::Display;
 use std::num::ParseIntError;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct Date {
     year: Option<u16>,
     month: Option<u16>,
     day: Option<u16>,
 }
 
+impl Date {
+    pub fn new() -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
+    pub fn year(&self) -> Option<u16> {
+        self.year
+    }
+    pub fn month(&self) -> Option<u16> {
+        self.month
+    }
+    pub fn day(&self) -> Option<u16> {
+        self.day
+    }
+    pub fn remove_from_str(&self, s: &str, delim: char) -> String {
+        if self.day.is_none() && self.month.is_none() && self.year.is_none() {
+            s.to_string()
+        } else if self.day.is_none() && self.month.is_none() {
+            return s.replace(&self.year.unwrap().to_string(), "");
+        } else if self.day.is_none() {
+            let opt3 = format!(
+                "{}{}{}",
+                self.year.unwrap(),
+                delim,
+                if self.month.unwrap() < 10 {
+                    format!("0{}", self.month.unwrap())
+                } else {
+                    self.month.unwrap().to_string()
+                }
+            );
+            if s.contains(&opt3) {
+                return s.replace(&opt3, "");
+            }
+            let opt4 = format!(
+                "{}{}{}",
+                if self.month.unwrap() < 10 {
+                    format!("0{}", self.month.unwrap())
+                } else {
+                    self.month.unwrap().to_string()
+                },
+                delim,
+                self.year.unwrap()
+            );
+            if s.contains(&opt4) {
+                return s.replace(&opt4, "");
+            }
+            let opt1 = format!("{}{}{}", self.year.unwrap(), delim, self.month.unwrap());
+            if s.contains(&opt1) {
+                return s.replace(&opt1, "");
+            }
+            let opt2 = format!("{}{}{}", self.month.unwrap(), delim, self.year.unwrap());
+            s.replace(&opt2, "")
+        } else {
+            let opt3 = format!(
+                "{}{}{}{}{}",
+                self.year.unwrap(),
+                delim,
+                if self.month.unwrap() < 10 {
+                    format!("0{}", self.month.unwrap())
+                } else {
+                    self.month.unwrap().to_string()
+                },
+                delim,
+                if self.day.unwrap() < 10 {
+                    format!("0{}", self.day.unwrap())
+                } else {
+                    self.day.unwrap().to_string()
+                }
+            );
+            if s.contains(&opt3) {
+                return s.replace(&opt3, "");
+            }
+            let opt4 = format!(
+                "{}{}{}{}{}",
+                if self.month.unwrap() < 10 {
+                    format!("0{}", self.month.unwrap())
+                } else {
+                    self.month.unwrap().to_string()
+                },
+                delim,
+                if self.day.unwrap() < 10 {
+                    format!("0{}", self.day.unwrap())
+                } else {
+                    self.day.unwrap().to_string()
+                },
+                delim,
+                self.year.unwrap()
+            );
+            if s.contains(&opt4) {
+                return s.replace(&opt4, "");
+            }
+            let opt1 = format!(
+                "{}{}{}{}{}",
+                self.year.unwrap(),
+                delim,
+                self.month.unwrap(),
+                delim,
+                self.day.unwrap()
+            );
+            if s.contains(&opt1) {
+                return s.replace(&opt1, "");
+            }
+            let opt2 = format!(
+                "{}{}{}{}{}",
+                self.month.unwrap(),
+                delim,
+                self.day.unwrap(),
+                delim,
+                self.year.unwrap()
+            );
+            s.replace(&opt2, "")
+        }
+    }
+}
+
+impl IntoIterator for &'_ Date {
+    type Item = Option<u16>;
+    type IntoIter = std::array::IntoIter<Option<u16>, 3>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIterator::into_iter([self.year, self.month, self.day])
+    }
+}
+
 impl PartialOrd for Date {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        for (a, b) in [self.year, self.month, self.day].iter().zip([other.year, other.month, other.day].iter()) {
+        for (a, b) in self.into_iter().zip(other.into_iter()) {
             if a.is_none() && b.is_some() {
                 return Some(std::cmp::Ordering::Less);
             } else if a.is_some() && b.is_none() {
